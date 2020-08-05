@@ -5,6 +5,7 @@ import Box from '@material-ui/core/Box';
 import Container from '@material-ui/core/Container';
 import Alert from '@material-ui/lab/Alert';
 import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
 import Chart from './Chart';
 import "./App.css";
 
@@ -33,8 +34,6 @@ class App extends React.Component {
       searchTimeout: 0,
       PROXY_URL: 'https://cors-anywhere.herokuapp.com/',
       SEARCH_URL: 'https://suggestqueries.google.com/complete/search?client=firefox&q=',
-      STATUS_1: 'Fetching related terms ....',
-      STATUS_2: 'Creating Weighted graph ....',
     }
 
     this.onChange = this.onChange.bind(this);
@@ -42,7 +41,6 @@ class App extends React.Component {
   }
 
   search = (vs, term) => {
-    // console.log('SELECTED TERM: ', this.state.selectedTerm);
     const searchTerm = vs ? term + ' vs ' : this.state.query;
     const SEARCH_URL = `${this.state.SEARCH_URL}${searchTerm}`
 
@@ -51,7 +49,6 @@ class App extends React.Component {
 
   isMoreItemsLeftToSearch = () => {
     let termsToSearch = this.state.toBeSearchedTerms;
-    console.log('MORE ITEMS TO SEARCH: ', this.state.toBeSearchedTerms);
     for (const [key, value] of Object.entries(termsToSearch)) {
       if(value === 0) {
         return true;
@@ -145,7 +142,6 @@ class App extends React.Component {
   }
 
   setRelatedTerms = (searchTerm) => {
-    console.log('SELECTED TERM: ', searchTerm);
     this.search(true, searchTerm)
       .then(res => res.json())
       .then(data => {
@@ -157,22 +153,14 @@ class App extends React.Component {
         cleanedTerms.forEach(term => {
           searched = { ...searched, [term]: 0}
         });
-        console.log('DEPTH: ' + this.state.maxDepth, 'CLEANED: ' + cleanedTerms, 'TERM: ' + searchTerm);
-        console.log('SEARCHED: ', searched);
 
         let currentToBeSearchedTerms = this.state.toBeSearchedTerms;
-        // if(Object.keys(currentToBeSearchedTerms).length < 12) {
-          for (const [key, value] of Object.entries(searched)) {
-            if(!Object.keys(currentToBeSearchedTerms).includes(key)) {
-              currentToBeSearchedTerms = {...currentToBeSearchedTerms, [key]: 0};
-            }
+        for (const [key, value] of Object.entries(searched)) {
+          if(!Object.keys(currentToBeSearchedTerms).includes(key)) {
+            currentToBeSearchedTerms = {...currentToBeSearchedTerms, [key]: 0};
           }
-        // }
+        }
         currentToBeSearchedTerms[searchTerm] = 1;
-
-        console.log('MODIFIED STATE FOR SEARCHED TERMS: ',  {...currentToBeSearchedTerms});
-        console.log('NOT CLEANED: ' + terms);
-        console.log('=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=');
         
         this.setState(prevState => ({
           releatedTerms: cleanedTerms,
@@ -186,7 +174,6 @@ class App extends React.Component {
   }
 
   startQuery = () => {
-    console.log('STARTING QUERY: .... ');
     if(this.state.selectedTerm !== "" &&
       (this.state.firstTime || this.isMoreItemsLeftToSearch()) && 
       this.state.maxDepth < 5
@@ -217,8 +204,15 @@ class App extends React.Component {
        query: event.target.value,
        typing: false,
        typingTimeout: setTimeout(function () {
-          //  self.search(self.state.query);
-          self.setOptions();
+          if(self.state.query !== "") {
+            self.setOptions();
+          } else {
+            self.setState({
+              data: {},
+              nodes: [],
+              links: [],
+            });
+          }
          }, 1000)
     });
   }
@@ -232,7 +226,7 @@ class App extends React.Component {
 
     self.setState({
       selectedTerm: value,
-      status: this.state.STATUS_1,
+      status: '',
       firstTime: true,
       currentDepth: 0,
       maxDepth: 0,
@@ -242,18 +236,50 @@ class App extends React.Component {
       nodes: [],
       links: [],
       searchTimeout: setTimeout(function () {
-        console.log('VALUE: ', value);
-        // self.setRelatedTerms();
         self.startQuery();
-       }, 1000)
+      }, 1000)
     });
   }
 
   render() {
     return (
       <div className="App">
-        <header className="App-header">          
-          <Autocomplete
+        <Container maxWidth="xl">
+          <Grid container spacing={3}>
+            <Grid item xs={12} className="App-header">
+              <Typography variant="h2" gutterBottom> Find Related Ideas </Typography>  
+            </Grid>
+            <Grid item xs={12} className="App-header">
+              <Autocomplete
+              freeSolo
+              id="free-solo-2-demo"
+              disableClearable
+              options={this.state.options.map((option) => option)}
+              onChange={this.autoCompleteChange}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Find relations for ..."
+                  margin="normal"
+                  variant="outlined"
+                  style={{ width: 500 }}
+                  InputProps={{ ...params.InputProps, type: "search" }}
+                  onChange={this.onChange}
+                />
+              )}
+              /> 
+            </Grid>
+        </Grid>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Chart data={this.state.data} />
+          </Grid>
+        </Grid>
+        </Container>
+        
+        {/* <header className="App-header"> */}
+        {/* <Typography variant="h2" gutterBottom> Find Related Ideas </Typography>       */}
+          {/* <Autocomplete
             freeSolo
             id="free-solo-2-demo"
             disableClearable
@@ -270,10 +296,10 @@ class App extends React.Component {
                 onChange={this.onChange}
               />
             )}
-          />
-          <Alert severity="info">{this.state.status}</Alert>
-        </header>
-        <Chart data={this.state.data} />
+          /> */}
+          {/* <Alert severity="info">{this.state.status}</Alert> */}
+        {/* </header> */}
+        {/* <Chart data={this.state.data} /> */}
       </div>
     );
   }

@@ -5,11 +5,12 @@ class Chart extends React.Component {
 
   componentDidUpdate() {
 
-    // console.log('DATA', this.props.data);
     if(this.props.data.links) {
       var svg = d3.select("svg.graph"),
       width = +svg.attr("width"),
       height = +svg.attr("height");
+
+      svg.selectAll("*").remove()
 
       var color = d3.scaleOrdinal([1,2,3,4]);
 
@@ -35,18 +36,18 @@ class Chart extends React.Component {
         
       var circles = node.append("circle")
           .attr("r", 5)
-          .attr("fill", function(d) { return color(d.group); });
-          // .call(d3.drag()
-          //     .on("start", dragstarted)
-          //     .on("drag", dragged)
-          //     .on("end", dragended));
+          .attr("fill", function(d) { return color(d.group); })
+          .call(d3.drag()
+              .on("start", dragstarted)
+              .on("drag", dragged)
+              .on("end", dragended));
     
-      var lables = node.append("text")
+      var labels = node.append("text")
           .text(function(d) {
             return d.id;
           })
-          .attr('x', 6)
-          .attr('y', 3);
+          .attr('x', 10)
+          .attr('y', 13);
     
       node.append("title")
           .text(function(d) { return d.id; });
@@ -69,6 +70,23 @@ class Chart extends React.Component {
             .attr("transform", function(d) {
               return "translate(" + d.x + "," + d.y + ")";
             })
+      }
+
+      function dragstarted(d) {
+        if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+      
+      function dragged(d) {
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+      }
+      
+      function dragended(d) {
+        if (!d3.event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
       }
     }    
   }
