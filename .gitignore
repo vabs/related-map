@@ -21,3 +21,8 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# local tooling artifacts
+.serena/
+.playwright-cli/
+output/playwright/
